@@ -2,8 +2,26 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_while_m_n},
     combinator::{map_res, opt},
-    IResult, Parser,
+    IResult, OutputMode, PResult, Parser,
 };
+
+pub struct ColorCode {}
+
+impl<'a> Parser<&'a str> for ColorCode {
+    type Output = Color;
+    type Error = nom::error::Error<&'a str>;
+
+    fn parse(&mut self, input: &'a str) -> IResult<&'a str, Color> {
+        todo!();
+    }
+
+    fn process<OM: OutputMode>(
+        &mut self,
+        input: &'a str,
+    ) -> PResult<OM, &'a str, Self::Output, Self::Error> {
+        todo!()
+    }
+}
 
 #[derive(Debug, PartialEq)]
 pub struct Color {
