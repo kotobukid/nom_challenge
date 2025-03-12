@@ -3,6 +3,7 @@ members = [
     "nomc"
     , "rpg"]
 
+resolver = "2"
 
 [workspace.dependencies]
 nom = "8.0.0"
