@@ -1,8 +1,9 @@
+use nom::error::ParseError;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while_m_n},
     combinator::{map_res, opt},
-    IResult, OutputMode, PResult, Parser,
+    IResult, Input, IsStreaming, Mode, OutputMode, PResult, Parser,
 };
 
 pub struct ColorCode {}
@@ -12,14 +13,19 @@ impl<'a> Parser<&'a str> for ColorCode {
     type Error = nom::error::Error<&'a str>;
 
     fn parse(&mut self, input: &'a str) -> IResult<&'a str, Color> {
-        todo!();
+        hex_color(input)
     }
 
     fn process<OM: OutputMode>(
         &mut self,
-        input: &'a str,
+        i: &'a str,
     ) -> PResult<OM, &'a str, Self::Output, Self::Error> {
-        todo!()
+        match self.parse(i) {
+            Ok((remaining, color)) => Ok((remaining, OM::Output::bind(|| color))),
+            Err(nom::Err::Error(e)) => Err(nom::Err::Error(OM::Error::bind(|| e))),
+            Err(nom::Err::Failure(e)) => Err(nom::Err::Failure(e)),
+            Err(nom::Err::Incomplete(n)) => Err(nom::Err::Incomplete(n)),
+        }
     }
 }
 
@@ -85,7 +91,24 @@ fn hex_color(input: &str) -> IResult<&str, Color> {
 }
 
 fn main() {
-    println!("{:?}", hex_color("color#2F14DF"))
+    // println!("{:?}", hex_color("color#2F14DF"))
+
+    // ColorCode構造体のインスタンスを作成
+    let mut parser = ColorCode {};
+
+    // 入力文字列
+    let input = "color#2F14DF11";
+
+    // パースの実行
+    match parser.parse(input) {
+        Ok((remaining, color)) => {
+            println!("Parsed color: {:?}", color);
+            println!("Remaining input: {:?}", remaining);
+        }
+        Err(err) => {
+            eprintln!("Failed to parse input: {:?}", err);
+        }
+    }
 }
 
 #[cfg(test)]
