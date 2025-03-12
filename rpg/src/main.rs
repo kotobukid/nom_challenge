@@ -1,4 +1,5 @@
 use nom::combinator::opt;
+use nom::sequence::pair;
 use nom::{IResult, Mode, OutputMode, PResult, Parser};
 
 #[derive(Debug, PartialEq)]
@@ -20,7 +21,7 @@ impl<'a> Parser<&'a str> for BasicRoll {
         let (input, sign) = opt(nom::character::complete::one_of("-+")).parse(input)?;
         let (input, modifier) = opt(nom::character::complete::digit1).parse(input)?;
 
-        let mut modifier_default = String::new();
+        let mut modifier_default = "0".to_string();
         if let Some(sign) = sign {
             if let Some(modifier) = modifier {
                 modifier_default = sign.to_string() + modifier;
@@ -50,6 +51,23 @@ impl<'a> Parser<&'a str> for BasicRoll {
     }
 }
 
+fn parse_modifier(input: &str) -> IResult<&str, i8> {
+    // let (input, (sign, value)) = pair(one_of("+-"), digit1)(input)?;
+    let (input, (sign, value)) = pair(
+        nom::character::complete::one_of("+-"),
+        nom::character::complete::digit1
+    ).parse(input)?;
+
+    let signed_value = match sign {
+        '+' => value.parse::<i8>().unwrap_or(0),
+        '-' => -1 * value.parse::<i8>().unwrap_or(0),
+        _ => unreachable!(),
+    };
+
+
+    Ok((input, signed_value))
+}
+
 fn main() {
     let mut basic_parser = BasicRoll {};
     let roll = "2D6+4";
@@ -75,5 +93,19 @@ mod tests {
         let roll = "5D10-4";
         let result = basic_parser.parse(roll);
         assert_eq!(result.unwrap().1.modifier, -4);
+    }
+
+    #[test]
+    fn test_no_modifier() {
+        let mut basic_parser = BasicRoll {};
+        let roll = "5D10";
+        assert_eq!(basic_parser.parse(roll).unwrap().1.modifier, 0);
+    }
+
+    #[test]
+    fn test_modifier_with_sign() {
+        let mut basic_parser = BasicRoll {};
+        let roll = "5D10+";
+        assert!(basic_parser.parse(roll).is_err());
     }
 }
