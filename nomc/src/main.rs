@@ -1,4 +1,5 @@
 use nom::{
+    branch::alt,
     bytes::complete::{tag, take_while_m_n},
     combinator::{map_res, opt},
     IResult, Parser,
@@ -28,15 +29,41 @@ fn hex_primary_opt(input: &str) -> IResult<&str, Option<u8>> {
     opt(hex_primary).parse(input)
 }
 
+fn hex_rgb(input: &str) -> IResult<&str, Color> {
+    let (input, (red, green, blue)) = (hex_primary, hex_primary, hex_primary).parse(input)?;
+    Ok((
+        input,
+        Color {
+            red,
+            green,
+            blue,
+            alpha: None,
+        },
+    ))
+}
+
+fn hex_rgba(input: &str) -> IResult<&str, Color> {
+    let (input, (red, green, blue, alpha)) =
+        (hex_primary, hex_primary, hex_primary, hex_primary).parse(input)?;
+    Ok((
+        input,
+        Color {
+            red,
+            green,
+            blue,
+            alpha: Some(alpha),
+        },
+    ))
+}
+
 fn hex_color(input: &str) -> IResult<&str, Color> {
     let (input, _) = tag("color")(input)?;
     let (input, _) = tag("#")(input)?;
-    let (input, red) = hex_primary(input)?;
-    let (input, green) = hex_primary(input)?;
-    let (input, blue) = hex_primary(input)?;
-    let (input, alpha) = hex_primary_opt(input)?;
 
-    Ok((input, Color { red, green, blue, alpha }))
+    // 短絡評価があるため、今回は先にrgbaでのパースを試みる必要がある(場合により計算量軽＞重にするなど)
+    let (input, color) = alt((hex_rgba, hex_rgb)).parse(input)?;
+
+    Ok((input, color))
 }
 
 fn main() {
