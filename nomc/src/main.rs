@@ -57,7 +57,7 @@ fn hex_rgba(input: &str) -> IResult<&str, Color> {
 }
 
 fn hex_color(input: &str) -> IResult<&str, Color> {
-    let (input, _) = tag("color")(input)?;
+    let (input, _) = opt(tag("color")).parse(input)?;
     let (input, _) = tag("#")(input)?;
 
     // 短絡評価があるため、今回は先にrgbaでのパースを試みる必要がある(場合により計算量軽＞重にするなど)
@@ -78,6 +78,22 @@ mod tests {
     fn parse_color() {
         assert_eq!(
             hex_color("color#2F14DF"),
+            Ok((
+                "",
+                Color {
+                    red: 47,
+                    green: 20,
+                    blue: 223,
+                    alpha: None,
+                }
+            ))
+        );
+    }
+
+    #[test]
+    fn parse_color_without_func_name() {
+        assert_eq!(
+            hex_color("#2F14DF"),
             Ok((
                 "",
                 Color {
