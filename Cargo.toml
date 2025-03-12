@@ -1,4 +1,8 @@
 [workspace]
 members = [
     "nomc"
-]
+    , "rpg"]
+
+
+[workspace.dependencies]
+nom = "8.0.0"
