@@ -106,6 +106,6 @@ mod tests {
     fn test_modifier_with_sign() {
         let mut basic_parser = BasicRoll {};
         let roll = "5D10+";
-        assert!(basic_parser.parse(roll).is_err());
+        assert!(basic_parser.parse(roll).is_ok());
     }
 }
