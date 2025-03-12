@@ -24,21 +24,19 @@ fn hex_primary(input: &str) -> IResult<&str, u8> {
     map_res(take_while_m_n(2, 2, is_hex_digit), from_hex).parse(input)
 }
 
+fn hex_primary_opt(input: &str) -> IResult<&str, Option<u8>> {
+    opt(hex_primary).parse(input)
+}
+
 fn hex_color(input: &str) -> IResult<&str, Color> {
-    let (input, c) = tag("color")(input)?;
+    let (input, _) = tag("color")(input)?;
     let (input, _) = tag("#")(input)?;
-    let (input, (red, green, blue, alpha)) =
-        (hex_primary, hex_primary, hex_primary, opt(hex_primary)).parse(input)?;
-    println!("{c}");
-    Ok((
-        input,
-        Color {
-            red,
-            green,
-            blue,
-            alpha,
-        },
-    ))
+    let (input, red) = hex_primary(input)?;
+    let (input, green) = hex_primary(input)?;
+    let (input, blue) = hex_primary(input)?;
+    let (input, alpha) = hex_primary_opt(input)?;
+
+    Ok((input, Color { red, green, blue, alpha }))
 }
 
 fn main() {
