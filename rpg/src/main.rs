@@ -1,12 +1,12 @@
-use nom::combinator::opt;
+use nom::character::complete::digit1;
 use nom::sequence::pair;
 use nom::{IResult, Mode, OutputMode, PResult, Parser};
 
 #[derive(Debug, PartialEq)]
 struct DiceRoll {
-    sides: u8,
-    count: u8,
-    modifier: i8,
+    sides: u32,
+    count: u32,
+    modifier: i32,
 }
 
 struct BasicRoll {}
@@ -15,25 +15,17 @@ impl<'a> Parser<&'a str> for BasicRoll {
     type Error = nom::error::Error<&'a str>;
 
     fn parse(&mut self, input: &'a str) -> IResult<&'a str, DiceRoll> {
-        let (input, count) = nom::character::complete::digit1(input)?;
+        let (input, count) = digit1(input)?;
         let (input, _) = nom::character::complete::char('D')(input)?;
-        let (input, sides) = nom::character::complete::digit1(input)?;
-        let (input, sign) = opt(nom::character::complete::one_of("-+")).parse(input)?;
-        let (input, modifier) = opt(nom::character::complete::digit1).parse(input)?;
-
-        let mut modifier_default = "0".to_string();
-        if let Some(sign) = sign {
-            if let Some(modifier) = modifier {
-                modifier_default = sign.to_string() + modifier;
-            }
-        }
+        let (input, sides) = digit1(input)?;
+        let (input, modifier) = parse_modifier(input)?;
 
         Ok((
             input,
             DiceRoll {
                 sides: sides.parse().unwrap(),
                 count: count.parse().unwrap(),
-                modifier: modifier_default.parse().unwrap(),
+                modifier,
             },
         ))
     }
@@ -51,28 +43,36 @@ impl<'a> Parser<&'a str> for BasicRoll {
     }
 }
 
-fn parse_modifier(input: &str) -> IResult<&str, i8> {
-    // let (input, (sign, value)) = pair(one_of("+-"), digit1)(input)?;
-    let (input, (sign, value)) = pair(
+fn parse_modifier(input: &str) -> IResult<&str, i32> {
+    let res = pair(
         nom::character::complete::one_of("+-"),
-        nom::character::complete::digit1
-    ).parse(input)?;
+        digit1::<&str, nom::error::Error<&str>>,
+    )
+    .parse(input);
 
-    let signed_value = match sign {
-        '+' => value.parse::<i8>().unwrap_or(0),
-        '-' => -1 * value.parse::<i8>().unwrap_or(0),
-        _ => unreachable!(),
-    };
+    match res {
+        Ok((input, (sign, value))) => {
+            let signed_value = match sign {
+                '+' => value.parse::<i32>().unwrap_or(0),
+                '-' => -1 * value.parse::<i32>().unwrap_or(0),
+                _ => unreachable!(),
+            };
 
-
-    Ok((input, signed_value))
+            Ok((input, signed_value))
+        }
+        Err(_e) => {
+            // eprintln!("{:?}", e);
+            // Err(e)
+            Ok((input, 0))
+        }
+    }
 }
 
 fn main() {
     let mut basic_parser = BasicRoll {};
-    let roll = "2D6+4";
+    let roll = "2D6+1";
     let result = basic_parser.parse(roll);
-    println!("{:?}", result);
+    println!("{:?}", result.unwrap().1);
 }
 
 #[cfg(test)]
