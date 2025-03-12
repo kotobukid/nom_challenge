@@ -91,6 +91,16 @@ mod tests {
     }
 
     #[test]
+    fn parse_color_e1() {
+        assert!(hex_color("color#2F14DG").is_err(),);
+    }
+
+    #[test]
+    fn parse_color_e2() {
+        assert!(hex_color("olor#2F14DF").is_err(),);
+    }
+
+    #[test]
     fn parse_color_without_func_name() {
         assert_eq!(
             hex_color("#2F14DF"),
