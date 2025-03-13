@@ -44,14 +44,15 @@ impl<'a> Parser<&'a str> for BasicRoll {
 }
 
 fn parse_modifier(input: &str) -> IResult<&str, i32> {
-    let res = pair(
+    let modifier_parser = pair(
         nom::character::complete::one_of("+-"),
         digit1::<&str, nom::error::Error<&str>>,
-    )
-    .parse(input);
+    );
 
-    match res {
-        Ok((input, (sign, value))) => {
+    let (input, opt_result) = nom::combinator::opt(modifier_parser).parse(input)?;
+
+    match opt_result {
+        Some((sign, value)) => {
             let signed_value = match sign {
                 '+' => value.parse::<i32>().unwrap_or(0),
                 '-' => -1 * value.parse::<i32>().unwrap_or(0),
@@ -60,19 +61,19 @@ fn parse_modifier(input: &str) -> IResult<&str, i32> {
 
             Ok((input, signed_value))
         }
-        Err(_e) => {
-            // eprintln!("{:?}", e);
-            // Err(e)
-            Ok((input, 0))
-        }
+        None => Ok((input, 0)),
     }
 }
 
 fn main() {
     let mut basic_parser = BasicRoll {};
-    let roll = "2D6+1";
-    let result = basic_parser.parse(roll);
-    println!("{:?}", result.unwrap().1);
+    let roll = "2D6+";
+    let result = basic_parser.parse(roll).unwrap();
+
+    println!(
+        "Input: {roll}\nRemaining: {}\nResult: {:?}",
+        result.0, result.1
+    );
 }
 
 #[cfg(test)]
