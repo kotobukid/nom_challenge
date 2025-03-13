@@ -55,7 +55,7 @@ fn parse_modifier(input: &str) -> IResult<&str, i32> {
         Some((sign, value)) => {
             let signed_value = match sign {
                 '+' => value.parse::<i32>().unwrap_or(0),
-                '-' => -1 * value.parse::<i32>().unwrap_or(0),
+                '-' => -value.parse::<i32>().unwrap_or(0),
                 _ => unreachable!(),
             };
 
